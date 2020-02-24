@@ -1,0 +1,745 @@
+---
+title: "Pricing and Profitability Analysis: Iowa Vodka Sales, 2013-2015"
+authors: "Andres Oliden & Brian Koob"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+
+This project is an an analysis of Vodka Sales in Iowa in the years 2013 through 2015. The dataset is from Kaggle, which itself is a subset of an alcohol sales dataset, which can be found at the following link: (https://www.kaggle.com/residentmario/iowa-liquor-sales).
+
+In Iowa, alcohol sales are conducted at a public level, and as such, sales are recorded as public record. Although data was available for all liquor sales, a number of factors led us to focus on solely on Vodka. Among these factors are that each alcohol has many presentations, such as size and brand, as well as many sub-brands. Focusing on one alcohol would eliminate some of the complexity. Vodka sales make up a large portion of spirts sales in Iowa, and we figured within the reduced dataset, this would provide us with a a robust data set. Within the vodka records, there were 536 brands, many of these brands actually being sub-brands (flavors, etc.). We chose the top three brands, which to no surprise, were not sub brands. 
+
+Although the dataset was very clean, there were many challenges in utilizing it for analysis. One was that the data was stacked, so each sale was based on one brand, and the sale had an attributed date and store. To conduct the pricing and profitability analysis, the data would need to be structured with each datapoint showing the price that all three brands were sold for at that store, on that date. As there were many stores and more than 1000 days in the data, we decided to aggregate the data by month, giving us 36 points in time. 
+
+The data was aggregated so that each data point represented the average selling price of the brand at each store by month. We summed the volume sold per data point and took the average price of the month per store, and normalized it by price per liter, in dollars.
+
+The business problem in question was to conduct a pricing and profitability analysis on the top three vodka brands in Iowa between 2013 and 2015 in order to get a better understanding of the characteristics of the products and the market, and to understand the own-price and cross-price elasticities, and ultimately to understand how price changes would affect the sales and profitability among the products.
+
+### Exploratory Data Analysis and Data Manipulation/Structuring
+
+#### Load in the data set:
+```{r}
+data <- read.csv("vodka.csv")
+str(data)
+```
+
+#### Load the lubridate and dplyr packages:
+```{r, eval=FALSE}
+install.packages("lubridate")
+library(lubridate)
+
+install.packages("dplyr")
+library(dplyr)
+```
+
+data <- backup
+
+#### Change the date variable from unstructured data to date data and change cost from factors to integers to facilitate proper analysis
+
+#### Filter the data to only keep years 2013, 2014, & 2015
+
+#### Filter data converting it to month numbers (Months 1 - 36):
+
+```{r}
+library(lubridate)
+
+data$Date <- as.Date(data$Date, format = "%m/%d/%Y")
+
+data$Sale..Dollars. <- as.numeric(gsub("\\$","",data$Sale..Dollars.))
+
+data$State.Bottle.Cost <- as.numeric(gsub("\\$","",data$State.Bottle.Cost))
+
+data$State.Bottle.Retail <- as.numeric(gsub("\\$","",data$State.Bottle.Retail))
+```
+
+#### Create New Datasets for each year - 2013, 2014, 2015 in order to seperate each year by the respective month in the sequence of 1-36:
+
+```{r}
+library(lubridate)
+
+data2015 <- data
+
+data2015 <- filter(data2015, data2015$Date > "2014-12-31" & data2015$Date < "2016-01-01")
+
+data2015$Month_Number <- month(data2015$Date)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 1, 25, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 2, 26, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 3, 27, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 4, 28, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 5, 29, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 6, 30, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 7, 31, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 8, 32, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 9, 33, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 10, 34, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 11, 35, data2015$Month_Number)
+
+data2015$Month_Number <- ifelse(data2015$Month_Number == 12, 36, data2015$Month_Number)
+```
+
+```{r}
+data2014 <- data
+
+data2014 <- filter(data2014, data2014$Date > "2013-12-31" & data2014$Date < "2015-01-01")
+
+data2014$Month_Number <- month(data2014$Date)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 1, 13, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 2, 14, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 3, 15, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 4, 16, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 5, 17, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 6, 18, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 7, 19, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 8, 20, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 9, 21, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 10, 22, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 11, 23, data2014$Month_Number)
+
+data2014$Month_Number <- ifelse(data2014$Month_Number == 12, 24, data2014$Month_Number)
+```
+
+```{r}
+data2013 <- data
+
+data2013 <- filter(data2013, data2013$Date > "2012-12-31" & data2013$Date < "2014-01-01")
+
+data2013$Month_Number <- month(data2013$Date)
+```
+
+#### Add datasets from 2013, 2014, and 2015 together:
+```{r}
+data_2013_2014_2015 <- rbind(data2013, data2014, data2015)
+
+data <- data_2013_2014_2015
+```
+
+#### Remove columns from the dataframe that will not be used in the analysis:
+```{r}
+data <- select (data,-c("Invoice.Item.Number","Address", "Store.Location", "Category", "Category.Name", "Pack", "Volume.Sold..Gallons."))
+```
+
+#### Create a subset comprised of the top three Vodka products sold by volume, in liters. Excel was used to create a pivot table to find the top three brands by sold by volume:
+```{r}
+BestSellers = subset(data, Item.Description == "Hawkeye Vodka" | Item.Description == "Five O'clock Vodka" | Item.Description == "Barton Vodka")
+head(BestSellers, 10)
+str(BestSellers)
+```
+
+#### Drop the columns of the dataframe for non-numeric values. Most of these columns have a corresponding numeric field such as "County.Number" and "Vendor.Number":
+```{r}
+BestSellers <- select(data,-c("Store.Name", "City",	"Zip.Code", "County", "Vendor.Name"))
+```
+
+#### Find the price per liter. The data has sales for various bottle sizes and sales vary by bottle quantity. Creating a price per liter provides a normalized price which facilitates comparison across data:
+```{r}
+BestSellers$price.L <- (BestSellers$Sale..Dollars.)/(BestSellers$Volume.Sold..Liters.)
+```
+
+```{r}
+BestSellers$p_state_L <- ((BestSellers$State.Bottle.Cost) * (BestSellers$Bottles.Sold))/(BestSellers$Volume.Sold..Liters.)
+```
+
+The data set was initailly stacked, with each data point representing one sale. A big challenge was to transform the data so that each row presents the sale price of each of the three products per point-in-time per store. The following steps execute this transformation.
+
+#### The following three code blocks move the price into its repsective price variable, named p_"product name":
+```{r}
+BestSellers$p_hawkeye <- BestSellers$price.L 
+
+BestSellers$p_hawkeye <-  ifelse(BestSellers$Item.Description == "Hawkeye Vodka", BestSellers$price.L ,NA)
+
+BestSellers$cost_hawkeye_L <- BestSellers$p_state_L 
+
+BestSellers$cost_hawkeye_L <-  ifelse(BestSellers$Item.Description == "Hawkeye Vodka", BestSellers$cost_hawkeye_L ,NA)
+```
+
+```{r}
+BestSellers$p_fiveO <- BestSellers$price.L
+
+BestSellers$p_fiveO <-  ifelse(BestSellers$Item.Description == "Five O'clock Vodka", BestSellers$price.L ,NA)
+
+BestSellers$cost_fiveO_L <- BestSellers$p_state_L 
+
+BestSellers$cost_fiveO_L <-  ifelse(BestSellers$Item.Description == "Five O'clock Vodka", BestSellers$cost_fiveO_L ,NA)
+``` 
+
+```{r}
+BestSellers$p_barton <- BestSellers$price.L 
+
+BestSellers$p_barton <-  ifelse(BestSellers$Item.Description == "Barton Vodka", BestSellers$price.L ,NA)
+
+BestSellers$cost_barton_L <- BestSellers$p_state_L 
+
+BestSellers$cost_barton_L <-  ifelse(BestSellers$Item.Description == "Barton Vodka", BestSellers$cost_barton_L ,NA)
+``` 
+
+#### The following three code blocks are similar but move the volume sold in liters to a quantity column, named q_"product name":
+```{r}
+BestSellers$q_hawkeye <- BestSellers$Volume.Sold..Liters
+
+BestSellers$q_hawkeye <-  ifelse(BestSellers$Item.Description == "Hawkeye Vodka", BestSellers$Volume.Sold..Liters , NA)
+```
+
+```{r}
+BestSellers$q_fiveO <- BestSellers$Volume.Sold..Liters
+
+BestSellers$q_fiveO <-  ifelse(BestSellers$Item.Description == "Five O'clock Vodka", BestSellers$Volume.Sold..Liters , NA)
+```
+
+```{r}
+BestSellers$q_barton <- BestSellers$Volume.Sold..Liters
+
+BestSellers$q_barton <-  ifelse(BestSellers$Item.Description == "Barton Vodka", BestSellers$Volume.Sold..Liters , NA)
+```
+
+#### The following step aggregates the three brands by month by store. The volume sold, under q_"vodka brand" is the sum of the product sold that week by store. The p_"vodka_brand" is the average (mean) price sold that month by store, in price/liter:
+```{r}
+data <- aggregate(BestSellers[c("p_hawkeye", "p_fiveO", "p_barton", "cost_hawkeye_L","cost_fiveO_L","cost_barton_L")], BestSellers[c("Store.Number", "Month_Number")], 
+          function(x) mean(as.numeric(x), na.rm=TRUE))
+
+data1 <- aggregate(BestSellers[c("q_hawkeye", "q_fiveO", "q_barton")], BestSellers[c("Store.Number", "Month_Number")], 
+          function(x) sum(as.numeric(x), na.rm=TRUE))
+
+data <- merge(data, data1 , by=c("Store.Number", "Month_Number"))
+
+BestSellers <- data[order(data$Month_Number, data$Store.Number),] 
+```
+
+```{r}
+BestSellers <- filter(data, p_hawkeye > 0.1, p_fiveO > 0.1, p_barton > 0.1)
+```
+
+#### Order the columns from Store Number and Month Number:
+```{r}
+BestSellers <- BestSellers[order(BestSellers$Month_Number, BestSellers$Store.Number),] 
+```
+
+#### Store the revenues for each product into a variable: 
+```{r}
+hawkeye_rev <- sum(BestSellers$p_hawkeye * BestSellers$q_hawkeye)
+hawkeye_rev
+
+fiveO_rev <- sum(BestSellers$p_fiveO * BestSellers$q_fiveO)
+fiveO_rev
+
+barton_rev <- sum(BestSellers$p_barton * BestSellers$q_barton)
+barton_rev
+
+total_rev <- hawkeye_rev + fiveO_rev + barton_rev 
+total_rev
+```
+
+#### The Total Revenue Between the 3 Products is $17,075,620
+
+#### Find market share of each product by dividing individual revenue by total revenue:
+```{r}
+share_hawkeye <- hawkeye_rev/total_rev
+share_hawkeye
+
+share_fiveO <- fiveO_rev/total_rev
+share_fiveO
+
+share_barton  <- barton_rev/total_rev
+share_barton
+```
+#### Find mean prices:
+```{r}
+hawkeye_mean <- mean(BestSellers$p_hawkeye)
+hawkeye_mean
+
+fiveO_mean <- mean(BestSellers$p_fiveO)
+fiveO_mean
+
+barton_mean <- mean(BestSellers$p_barton)
+barton_mean
+```
+
+#### Find median prices:
+```{r}
+hawkeye_median <- median(BestSellers$p_hawkeye)
+hawkeye_median
+
+fiveO_median <- median(BestSellers$p_fiveO)
+fiveO_median
+
+barton_median <- median(BestSellers$p_barton)
+barton_median
+```
+
+#### Find standard deviation among prices:
+```{r}
+hawkeye_sd <- sd(BestSellers$p_hawkeye)
+hawkeye_sd
+
+fiveO_sd <- sd(BestSellers$p_fiveO)
+fiveO_sd
+
+barton_sd <- sd(BestSellers$p_barton)
+barton_sd
+```
+
+: Table of marketshare (in percentage) and price statistics (in dollars)
+
++---------------+---------------+-------------+--------------+-----------+
+| Product       | Marketshare   | Mean Price  | Median Price | Std. Dev  |          
++===============+===============+=============+==============+===========+
+| Hawkeye Vodka |     46.81%    |   $6.50     |    $6.41     |  $0.363   |
++---------------+---------------+-------------+--------------+-----------+
+| Five O'clock V|     24.57%    |   $6.65     |    $6.50     |  $0.476   |
++---------------+---------------+-------------+--------------+-----------+
+| Barton Vodka  |     28.63%    |   $6.07     |    $5.94     |  $0.264   |
++---------------+---------------+-------------+--------------+-----------+
+
+#### Generate 3 new variables that capture the price difference between Hawkeye Vodka & Five O'clock, Hawkeye Vodka & Barton Vodka, and Five O'clock & Barton Vodka:
+
+i. Price difference: Hawkeye Vodka & Five O'clock Vodka
+```{r}
+BestSellers$hawkeye_five <- BestSellers$p_hawkeye - BestSellers$p_fiveO
+```
+
+ii. Price Difference: Hawkeye Vodka & Barton Vodka
+```{r}
+BestSellers$hawkeye_barton <- BestSellers$p_hawkeye - BestSellers$p_barton
+```
+
+iii. Price Difference: Five O'clock Vodka & Barton Vodka
+```{r}
+BestSellers$five_barton <- BestSellers$p_fiveO - BestSellers$p_barton
+```
+
+#### Create histograms of the price gaps:
+
+i. Histogram of Price Difference: Hawkeye Vodka & Five O'clock Vodka
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+hist(BestSellers$hawkeye_five, main = "Histogram of Price Gaps (Hawkeye - Five O'clock)" ,xlab = "Price Gap Between Hawkeye and Five O'clock Vodka ($/Liter)")
+```
+
+ii. Histogram of Price Difference: Hawkeye Vodka & Barton Vodka
+```{r}
+hist(BestSellers$hawkeye_barton, main = "Histogram of Price Gaps (Hawkeye - Barton)" ,xlab = "Price Gap Between Hawkeye and Barton Vodka ($/Liter)")
+```
+
+iii. Histogram of Price Difference: Five O'clock V and Barton Vodka
+```{r}
+hist(BestSellers$five_barton, main = "Histogram of Price Gaps (Five O'clock - Barton)" ,xlab = "Price Gap Between Five O'clock and Barton Vodka ($/Liter)")
+```
+
+Although the mean price of the three products are similar, the histograms show that at many points in time, there are differences in prices between the products. 
+Most price differences are captured between + or - $1. This is significant as a $1 is around 15% of the mean price of the vodkas. There is enough variation to look into cross price elasticities of the products.
+
+### Demand Estimation
+
+#### Construct the relative sales volumes between products:
+
+i. Relative Sales Volume: Hawkeye Vodka
+```{r}
+BestSellers$hawkeye_rel_vol = ((BestSellers$q_hawkeye)/(BestSellers$q_hawkeye + BestSellers$q_fiveO + BestSellers$q_barton))
+```
+
+ii. Relative Sales Volume: Five O'clock
+```{r}
+BestSellers$fiveO_rel_vol = ((BestSellers$q_fiveO)/(BestSellers$q_hawkeye + BestSellers$q_fiveO + BestSellers$q_barton))
+```
+
+iii. Relative Sales Volume: Barton Vodka
+```{r}
+BestSellers$barton_rel_vol = ((BestSellers$q_barton)/(BestSellers$q_hawkeye + BestSellers$q_fiveO + BestSellers$q_barton))
+```
+
+The data does not have All Commodity Value available. In order to compare relative sales values when looking at the quantity sold, the quantity sold in liters by store per month is divided by the total volume sold in liters of the three vodkas during the same time period, giving a market share of average price per store per month by vodka. It serves as an indicator of which product is most popular at that location at that point in time, which is likely influenced in part by price.
+
+#### Estimate the log-log demand models for the three products by regressing the log of relative volume on all prices (own and competing products).
+
+i. Log-Log Regression of Relative Sales Volume of Hawkeye on All Prices:
+```{r}
+h_relvol_reg = lm(log(hawkeye_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton), data=BestSellers)
+
+summary(h_relvol_reg)
+```
+This regression shows that a 1% increase in Hawkeye price will lead to a 1.2% change in relative sales volume (elastic), 0.18% increase in Five O'clock (very inelastic), and 2.12% change in Barton (very elastic). All variables are significant at alpha of 5%, but the $R^2$ value is very low. This model should be refined, and does not seem to be reliable.
+
+ii. Log-Log Regression of Relative Sales Volume of Five- O'clock on All Prices:
+
+```{r}
+f_relvol_reg = lm(log(fiveO_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton), data=BestSellers)
+
+summary(f_relvol_reg)
+```
+This regression shows that a 1% increase in Five O'clock price will lead to a -0.8% (inelastic)change in relative sales volume of Hawkeye and a - 01.42% derease in Five O'clock (very elastic). All variables are significant at alpha of 5% except Barton, and the $R^2$ value is very low. This model should be refined, and does not seem to be reliable.
+
+
+Log-Log Regression of Relative Sales Volume of Barton on All Prices:
+
+```{r}
+b_relvol_reg = lm(log(barton_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton), data=BestSellers)
+
+summary(b_relvol_reg)
+```
+This regression shows that a 1% increase in Barton price will lead to a -4.6% change in Barton (very elastic). Only the intercept and and the Barton coefficient are significant, and the $R^2$ value is very low. This model should be refined, and does not seem to be reliable.
+
+### Time Trend
+
+#### Re-estimate the Log-Log demand models for the three products including a time trend. A time trend is a variable that proxies for the progress of time. You can use the "Month" variable as the time trend.
+
+i. Log-Log Regression of Relative Sales Volume of Hawkeye on All Prices Plus Month Variable:
+
+```{r}
+h_relvol_month_reg = lm(log(hawkeye_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number, data=BestSellers)
+
+summary(h_relvol_month_reg)
+```
+This regression shows that a 1% increase in Hawkeye price will lead to a 1.24% (moderately elastic) change in relative sales volume of Hawkeye and a 2.16% (highly elastic) increase in Barton. The Five' O coefficient is not significant, and the $R^2$ value is very low. 
+
+ii. Log-Log Regression of Relative Sales Volume of Five-O'clock on All Prices Plus Month Variable:
+
+```{r}
+f_relvol_month_reg = lm(log(fiveO_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number, data=BestSellers)
+
+summary(f_relvol_month_reg)
+```
+This regression shows that a 1% increase in Five O'clock price will lead to a -0.795% (inelastic) change in relative sales volume of Hawkeye and a 1.43% (moderately elastic) decrease in Five O'clock. The Barton and Month_Number coefficients are not significant, and the $R^2$ value is very low. This model should be refined, and does not seem to be reliable.
+
+iii. Log-Log Regression of Relative Sales Volume of Barton on All Prices Plus Month Variable:
+```{r}
+b_relvol_month_reg = lm(log(barton_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number, data=BestSellers)
+
+summary(b_relvol_month_reg)
+```
+This regression shows that a 1% increase in Barton price will lead to a -0.37% (inelastic) change in relative sales volume of Hawkeye, a 0.27% increase (inelastic) in Five O'clock, and -4.7% change in Barton (very elastic). All included variables are significant, but the $R^2$ value is very low. This model should be refined, and does not seem to be reliable.
+
+Adding a time trend variable makes sense as there is variability in the product prices and this variation occurs across time.
+
+In this case, adding a time variable did not seem to help much, as the $R^2$ values are still abysimally low.
+
+### Store Fixed Effects
+
+Re-estimated the log-log demand models for the three vodkas including a time trend and fixed store effects. Do not display the coefficients for the fixed effects, instead only showing the intercept and coefficients for the price elasticities and the time trend.
+
+#### Install and load the knitr and broom packages which will allow for neater tables:
+```{r, eval=FALSE}
+install.packages("knitr")
+install.packages("broom")
+```
+
+```{r}
+library(knitr)
+library(broom)
+```
+
+i. Log-Log regression of Relative Sales Volume of Hawkeye on All Prices Plus Month Variable and Store Fixed Effect:
+```{r}
+h_relvol_month_store_reg <- lm(log(q_hawkeye) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+h_reg <- tidy(h_relvol_month_store_reg)
+
+kable(h_reg[1:5,])
+```
+This regression shows that a 1% increase in Hawkeye price will lead to a -2.3% change in relative sales volume of Hawkeye (very elastic). Only the Hawkeye and Intercept variables are significant. This model makes more sense in the effect on the relative sales volume of Hawkeye following a price increase.
+
+ii. Log-Log Regression of Relative Sales Volume of Five O'clock on All Prices Plus Month Variable and Store Fixed Effect:
+
+```{r}
+f_relvol_month_store_reg <-lm(log(q_fiveO) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+f_reg <- tidy(f_relvol_month_store_reg)
+
+kable(f_reg[1:5,])
+```
+This regression shows that a 1% increase in Five O'clock will lead to a -1.62% change in relative sales volume of Five O'clock, showing that it is very elastic. Only the intercept and and the Five O'clock coefficient are significant. 
+
+iii. Log-Logegression of Relative Sales Volume of Barton on All Prices Plus Month Variable and Store Fixed Effect:
+
+```{r}
+b_relvol_month_store_reg = lm(log(barton_rel_vol) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+b_reg <- tidy(b_relvol_month_store_reg)
+
+kable(b_reg[1:5,])
+```
+This regression shows that a 1% increase in Barton will lead to a 1.13% increase (elastic) in relative sales volume of Hawkeye and a 1.81% decrease in Barton (very elastic. Five O'clock is not significant in this regression. 
+
+Adding the store into the equation really resulted in model clarity, and has resulted in a model that is more useful and robust.
+
+### Compare the estimates to a slightly different regressin with the log of sales volume, not log of relative sales volume, as dependent variable.
+
+i. Hawkeye Vodka Unit Sales Log-Log Regression
+```{r}
+h_unitsales_reg = lm(log(q_hawkeye) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+h_reg_2 <- tidy(h_unitsales_reg)
+
+kable(h_reg_2[1:5,])
+```
+This change of a 1% price increase in Hawkeye resulted in a 2.34% reduction in the sales volume of Hawkeye (very elastic). The only other significant variable was the month.
+
+ii. Five O'clock Vodka Unit Sales Log-Log Regression
+
+```{r}
+f_unitsales_reg = lm(log(q_fiveO) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+f_reg_2 <- tidy(f_unitsales_reg)
+
+kable(f_reg_2[1:5,])
+```
+The change of a 1% price increase in Five O'clock resulted in a 1.63% reduction in the sales volume of Five O'clock (very elastic). When regressing this model on Hawkeye, it shows that the own-elasticity of Hawkeye is greater than the own-elasticity of Five O'clock.
+
+iii. Barton Vodka Unit Sales Log-Log Regression
+```{r}
+b_unitsales_reg = lm(log(q_barton) ~ log(p_hawkeye) + log(p_fiveO) + log(p_barton) + Month_Number + factor(Store.Number), data=BestSellers)
+
+b_reg_2 <- tidy(b_unitsales_reg)
+
+kable(b_reg_2[1:5,])
+```
+The change of a 1% price increase in Barton resulted in a 1.86% reduction in the sales volume of Barton (very elastic). 
+
+Interestingly, in these models, we could only determine own-price elasticity as the cross price elasticities were not significant. Hawkeyes own-price elasticity is greater than both Five O'clock's and Barton's and Barton's is greater than Five O'clocks. 
+
+### Pricing and Profitability Analysis
+
+#### Assuming no known promotions, calculate the base price (retail) of the three Vodka Brands:
+
+i. Base Price of 1L of Hawkeye Vodka ($):
+```{r}
+hawkeye_base = mean(BestSellers$p_hawkeye)
+
+hawkeye_base
+```
+The base price of Hawkeye Vodka, per liter, is $6.49.
+
+ii. Base Price of 1L of Five O'clock Vodka ($):
+```{r}
+fiveO_base = mean(BestSellers$p_fiveO)
+
+fiveO_base
+```
+The base price of Five O'clock Vodka, per liter, is $6.65.
+
+iii. Base Price of 1L of Barton Vodka ($)
+```{r}
+barton_base = mean(BestSellers$p_barton)
+
+barton_base
+```
+The base price of Barton Vodka, per liter, is $6.07.
+
+#### Calculate the base cost (wholesale) of the three Vodka Brands:
+
+i. Base Cost of 1L of Hawkeye Vodka ($):
+```{r}
+hawkeye_cost = mean(BestSellers$cost_hawkeye_L)
+
+hawkeye_cost
+```
+The base cost of Hawkeye Vodka, per liter, is $4.33.
+
+ii. Base Cost of 1L of Five O'clock Vodka ($):
+```{r}
+fiveO_cost = mean(BestSellers$cost_fiveO_L)
+
+fiveO_cost
+```
+The base Cost of Five O'clock Vodka, per liter, is $4.43.
+
+iii. Base cost of 1L of Barton Vodka ($)
+```{r}
+barton_cost = mean(BestSellers$cost_barton_L)
+
+barton_cost
+```
+The base cost of Barton Vodka, per liter, is $4.05.
+
+### Calculate the base volume as average yearly volume sales for the three vodka brands:
+
+        base vol = no. of stores x 12 months x mean sales of vodka brand
+        
+i. Base Volume of Hawkeye Vodka
+```{r}        
+h_basevol = 12*559*mean(BestSellers$q_hawkeye) #12 months, 559 stores
+
+h_basevol
+```
+The base volume of Hawkeye Vodka is 800,288.1 liters.
+
+ii. Base Volume of Five O'clock Vodka
+```{r}        
+f_basevol = 12*559*mean(BestSellers$q_fiveO) #12 months, 559 stores
+
+f_basevol
+```
+The base volume of Five O'clock Vodka is 412,865 liters.
+
+iii. Base Volume of Barton Vodka
+```{r}        
+b_basevol = 12*559*mean(BestSellers$q_barton) #12 months, xx stores
+
+b_basevol
+```
+The base volume of Barton Vodka is 529,160.2 liters.
+
+### What is the average yearly base total profit for each vodka brand (sum of profits)?
+
+profit = Q *(base price/L - base cost/L)
+
+i. Average Hawkeye Yearly Base Total Profit:
+```{r}
+profit_hawkeye <- h_basevol * (hawkeye_base - hawkeye_cost)
+
+profit_hawkeye
+```
+Hawkeye Profit = $1,734,071.00
+
+ii. Average Five O'clock Yearly Base Total Profit:
+```{r}
+profit_five0 <- f_basevol * (fiveO_base - fiveO_cost)
+
+profit_five0
+```
+Five O'clock Profit = $915,038.30
+
+iii. Average Barton yearly base total profit:
+```{r}
+profit_barton = b_basevol*(barton_base - barton_cost)
+
+profit_barton
+```
+Barton Profit = $1,070,492.00
+
+#### Calculate the total new expected volume of Hawkeye Vodka and Five O'clock Vodka from the following price changes:
+
+i.   A Simultaneous 5% Increase in Prices of All Products
+ii.  A Simultaneous 5% Decrease in Prices of All Products
+iii. A 5% increase in Hawkeye and Barton and a 5% decrease in Five O'clock prices.
+iv.  A 5% decrease in Hawkeye and Barton and a 5% increase in Five O'clock prices.
+v.   A 5% decrease in Hawkeye and a 5% increase in Five O'clock and Barton prices.
+
+Assuming that:
+Change in price = % change price * base price
+Change in demand = elasticity * change in price
+New volume = base volume * change in demand
+
+```{r}
+new_volume <- function(x,y,z)
+{
+  hawkeye_new.vol =   (1+x)^(-2.34)*(1+y)^-0.19*(1+z)^(0.27)*h_basevol
+  
+  fiveO_new.vol = (1+x)^-0.18*(1+y)^(-1.63)*(1+z)^0.13*f_basevol
+  
+  barton_new.vol = (1+x)^-0.02*(1+y)^(-0.20)*(1+z)^-1.86*b_basevol
+
+  return(list(hawkeye_new.vol,fiveO_new.vol,barton_new.vol))
+}
+```
+
+i. A Simultaneous 5-percent Increase in the Prices of All Three Products 
+```{r}
+x=0.05
+y=0.05
+z=0.05
+
+new_volume.1 <- new_volume(x,y,z)
+new_volume.1
+```
+ii. A Simultaneous 5-percent Decrease in the Prices of All Products 
+```{r}
+x=-0.05
+y=-0.05
+z=-0.05
+
+new_volume.2 <- new_volume(x,y,z)
+new_volume.2
+```
+
+iii. A simultaneous 5-percent decrease in the price Five O'clock Vodka and 5-percent increase in the prices of both Hawkeye and Barton Vodkas   
+```{r}
+x=0.05
+y=-0.05
+z=0.05
+
+new_volume.3 <- new_volume(x,y,z)
+new_volume.3
+```
+
+iv. A simultaneous 5-percent increase in the price of Five O'clock Vodka and 5-percent decrease in the prices of both Hawkeye and Barton Vodkas 
+```{r}
+x=-0.05
+y=0.05
+z=-0.05
+
+new_volume.4 <- new_volume(x,y,z)
+new_volume.4
+```
+(5) A simultaneous 5 percent decrease in the price of Tide 128 and 5 percent increase in the price of Tide 64
+```{r}
+x=-0.05
+y=0.05
+z=0.05
+
+new_volume.5 <- new_volume(x,y,z)
+new_volume.5
+```
+
+### Volume Sold (Base Volumes) Between Hawkeye Vodka, Five O' Clock Vodka, & Barton Vodka, under five above scenarious (by row)
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+    |Old Base Hawkeye|Old Base FiveO |Old Base Barton|New Base Hawkeye|New Base FiveO |New Base Barton|   
+----+================+===============+===============+================+===============+===============+
+i.  |800,288.10      |412,865.00     |529,160.20     |716,734.80      |380,373.30     |478,094.20     |
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+ii. |800,288.10      |412,865.00     |529,160.20     |898,650.80      |450,020.60     |588,738.00     |
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+iii.|800,288.10      |412,865.00     |529,160.20     |730,494.60      |447,774.20     |487,760.50     |
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+iv. |800,288.10      |412,865.00     |529,160.20     |881,723.70      |382,281.50     |577,070.60     |
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+v.  |800,288.10      |412,865.00     |529,160.20     |905,874.90      |387,287.80     |479,052.10     |
+----+----------------+---------------+---------------+----------------+---------------+---------------+
+
+
+### Percent Change of Volumes Based on five scenarios (represented here in rows)
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+    |%Change Hawk(P)|%Change Five(P)|%Δ Barton(P)     |%Δ Hawkeye (vol)|%Δ FiveO (vol) |%Δ Barton (vol)|   
+----+===============+===============+=================+================+===============+===============+
+i.  |0.05           |0.05           |0.05             |-10.44%         |-7.87 %        |-9.65%         |
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+ii. |-0.05          |-0.05          |-0.05            |12.29%          |9.00%          |11.26%         |
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+iii.|0.05           |-0.05          |0.05             |-8.72%          |8.46%          |-7.82%         |
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+iv. |-0.05          |0.05           |-0.05            |10.16%          |-7.41%         |9.05%          |
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+v.  |-0.05          |0.05           |0.05             |13.19%          |-6.20%         |-9.47%         |
+----+---------------+---------------+-----------------+----------------+---------------+---------------+
+
+This cost sensitivity analysis gives good insight into the own-price and cross-price elasticity and how these operate in a system of competitive products. All price changes result as one would expect, with price increases leading to volume decreases. In general, Hawkeye is the most price sensitive, followed by Barton, which is then followed by Five O'clock.
+
